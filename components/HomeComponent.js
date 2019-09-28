@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { ScrollView, Text } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { connect } from "react-redux";
 import { Card } from "react-native-elements";
 import { Loading } from "./LoadingComponent";
