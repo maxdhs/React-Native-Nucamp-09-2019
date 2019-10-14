@@ -12,6 +12,7 @@ import DatePicker from "react-native-datepicker";
 import * as Animatable from "react-native-animatable";
 import { Notifications } from "expo";
 import * as Permissions from "expo-permissions";
+import * as Calendar from "expo-calendar";
 
 class Reservation extends Component {
   constructor(props) {
@@ -27,38 +28,6 @@ class Reservation extends Component {
   static navigationOptions = {
     title: "Reserve Table"
   };
-
-  async obtainNotificationPermission() {
-    let permission = await Permissions.getAsync(
-      Permissions.USER_FACING_NOTIFICATIONS
-    );
-    if (permission.status !== "granted") {
-      permission = await Permissions.askAsync(
-        Permissions.USER_FACING_NOTIFICATIONS
-      );
-      if (permission.status !== "granted") {
-        Alert.alert("Permission not granted to show notifications");
-      }
-    }
-    console.log(permission);
-    return permission;
-  }
-
-  async presentLocalNotification(date) {
-    await this.obtainNotificationPermission();
-    Notifications.presentLocalNotificationAsync({
-      title: "Your Reservation",
-      body: "Reservation for " + date + " requested",
-      ios: {
-        sound: true
-      },
-      android: {
-        sound: true,
-        vibrate: true,
-        color: "#512DA8"
-      }
-    });
-  }
 
   handleReservation() {
     console.log(JSON.stringify(this.state));
@@ -85,6 +54,7 @@ class Reservation extends Component {
           text: "OK",
           onPress: () => {
             this.presentLocalNotification(this.state.date);
+            this.addReservationToCalendar(this.state.date);
             this.resetForm();
           }
         }
@@ -98,6 +68,59 @@ class Reservation extends Component {
       guests: 1,
       smoking: false,
       date: ""
+    });
+  }
+
+  async obtainNotificationPermission() {
+    let permission = await Permissions.getAsync(
+      Permissions.USER_FACING_NOTIFICATIONS
+    );
+    if (permission.status !== "granted") {
+      permission = await Permissions.askAsync(
+        Permissions.USER_FACING_NOTIFICATIONS
+      );
+      if (permission.status !== "granted") {
+        Alert.alert("Permission not granted to show notifications");
+      }
+    }
+    return permission;
+  }
+
+  async obtainCalendarPermission() {
+    let permission = await Permissions.getAsync(Permissions.CALENDAR);
+    if (permission.status !== "granted") {
+      permission = await Permissions.askAsync(Permissions.CALENDAR);
+      if (permission.status !== "granted") {
+        Alert.alert("Permission not granted to access the calendar.");
+      }
+    }
+    return permission;
+  }
+
+  async presentLocalNotification(date) {
+    await this.obtainNotificationPermission();
+    Notifications.presentLocalNotificationAsync({
+      title: "Your Reservation",
+      body: "Reservation for " + date + " requested",
+      ios: {
+        sound: true
+      },
+      android: {
+        sound: true,
+        vibrate: true,
+        color: "#512DA8"
+      }
+    });
+  }
+
+  async addReservationToCalendar(date) {
+    await this.obtainCalendarPermission();
+    Calendar.createEventAsync("1", {
+      title: "Con Fusion Table Reservation",
+      startDate: new Date(Date.parse(date)),
+      endDate: new Date(Date.parse(date) + 7200000), // 7200000ms = 2 hours
+      timeZone: "Asia/Hong_Kong",
+      location: "121, Clear Water Bay Road, Clear Water Bay, Kowloon, Hong Kong"
     });
   }
 
@@ -126,7 +149,7 @@ class Reservation extends Component {
           <Switch
             style={styles.formItem}
             value={this.state.smoking}
-            trackColor={{ true: "#512DA8", false: null }}
+            onTrackColor="#512DA8"
             onValueChange={value => this.setState({ smoking: value })}
           ></Switch>
         </View>
